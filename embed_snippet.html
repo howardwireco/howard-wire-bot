@@ -1,22 +1,5 @@
-<!--
-  HOWARD WIRE CHAT WIDGET — EMBED CODE
-  Paste this one snippet anywhere in your website's HTML, just before </body>.
-  Replace YOUR_SERVER_URL with the public URL where you deployed the bot.
--->
-<script>
-(function() {
-  var SERVER = "https://YOUR_SERVER_URL";  // ← change this
-
-  // Inject stylesheet
-  var link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = SERVER + "/static/widget.css";
-  document.head.appendChild(link);
-
-  // Inject widget script
-  var s = document.createElement("script");
-  s.src = SERVER + "/static/widget.js";
-  s.setAttribute("data-api", SERVER + "/chat");
-  document.body.appendChild(s);
-})();
+<!-- Howard Wire — Meshy Chat Widget. Paste just before </body> in theme.liquid -->
+<script
+  src="https://web-production-bed4.up.railway.app/static/widget.js"
+  data-api="https://web-production-bed4.up.railway.app/chat">
 </script>
