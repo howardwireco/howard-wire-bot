@@ -6,177 +6,223 @@
   <title>Howard Wire — Ask Meshy</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #f5f0eb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       min-height: 100vh;
     }
 
     /* ── Demo page ── */
     .demo-page { text-align: center; padding: 40px 20px; }
     .demo-page h1 { color: #1a1a1a; font-size: 1.8rem; margin-bottom: 8px; }
-    .demo-page p  { color: #555; font-size: 1rem; margin-bottom: 24px; }
+    .demo-page p  { color: #555; margin-bottom: 24px; }
     .demo-page .open-btn {
-      background: #e85d04;
-      color: #fff;
-      border: none;
-      padding: 12px 28px;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      font-weight: 600;
+      background: #e85d04; color: #fff; border: none;
+      padding: 12px 28px; border-radius: 6px; font-size: 1rem;
+      cursor: pointer; font-weight: 600;
     }
     .demo-page .open-btn:hover { background: #c44d02; }
 
-    /* ── Launcher button ── */
+    /* ── Launcher ── */
     #hw-launcher {
-      position: fixed;
-      bottom: 24px; right: 24px;
-      width: 68px; height: 68px;
-      border-radius: 50%;
-      background: #e85d04;
-      border: 3px solid #fff;
-      cursor: pointer;
-      box-shadow: 0 4px 18px rgba(232,93,4,.45);
+      position: fixed; bottom: 24px; right: 24px;
+      width: 68px; height: 68px; border-radius: 50%;
+      background: #e85d04; border: 3px solid #fff;
+      cursor: pointer; box-shadow: 0 4px 18px rgba(232,93,4,.45);
       display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-      transition: transform .15s, box-shadow .15s;
-      z-index: 9998;
-      padding: 0;
+      overflow: hidden; transition: transform .15s, box-shadow .15s;
+      z-index: 9998; padding: 0;
     }
     #hw-launcher:hover { transform: scale(1.07); box-shadow: 0 6px 22px rgba(232,93,4,.55); }
-    #hw-launcher img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      object-position: 50% 18%;
-    }
+    #hw-launcher img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
     #hw-launcher .badge {
       position: absolute; top: 3px; right: 3px;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: #1a3a5c;
-      border: 2px solid #fff;
-      display: none;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #1a3a5c; border: 2px solid #fff; display: none;
     }
     #hw-launcher.has-unread .badge { display: block; }
 
-    /* ── Chat panel ── */
+    /* ── Panel ── */
     #hw-panel {
-      position: fixed;
-      bottom: 104px; right: 24px;
-      width: 390px;
-      max-width: calc(100vw - 32px);
-      height: 580px;
-      max-height: calc(100vh - 120px);
-      background: #fff;
-      border-radius: 18px;
+      position: fixed; bottom: 104px; right: 24px;
+      width: 390px; max-width: calc(100vw - 32px);
+      height: 600px; max-height: calc(100vh - 120px);
+      background: #fff; border-radius: 18px;
       box-shadow: 0 10px 44px rgba(0,0,0,.18);
       display: flex; flex-direction: column;
-      overflow: hidden;
-      z-index: 9999;
-      transform: scale(.9) translateY(20px);
-      opacity: 0;
-      pointer-events: none;
-      transform-origin: bottom right;
+      overflow: hidden; z-index: 9999;
+      transform: scale(.9) translateY(20px); opacity: 0;
+      pointer-events: none; transform-origin: bottom right;
       transition: transform .22s ease, opacity .22s ease;
     }
-    #hw-panel.open {
-      transform: scale(1) translateY(0);
-      opacity: 1;
-      pointer-events: all;
-    }
+    #hw-panel.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
 
-    /* Header */
-    .hw-header {
-      background: linear-gradient(135deg, #e85d04 0%, #c44d02 100%);
-      color: #fff;
+    /* ── Views (home / chat) ── */
+    .hw-view { display: flex; flex-direction: column; height: 100%; }
+    .hw-view.hidden { display: none; }
+
+    /* ════════════════════════════════
+       HOME VIEW
+    ════════════════════════════════ */
+    .home-hero {
+      background: linear-gradient(160deg, #e85d04 0%, #ff8c42 50%, #ffb347 100%);
+      padding: 28px 20px 0;
+      display: flex; flex-direction: column; align-items: center;
+      position: relative; flex-shrink: 0;
+    }
+    .home-close {
+      position: absolute; top: 12px; right: 14px;
+      background: rgba(255,255,255,.25); border: none;
+      color: #fff; width: 28px; height: 28px; border-radius: 50%;
+      font-size: 16px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .home-close:hover { background: rgba(255,255,255,.4); }
+    .home-meshy {
+      width: 150px; height: 150px;
+      object-fit: contain; object-position: center center;
+      filter: drop-shadow(0 6px 16px rgba(0,0,0,.25));
+      margin-bottom: -10px;
+    }
+    .home-body {
+      flex: 1; overflow-y: auto; padding: 24px 20px 16px;
+    }
+    .home-body::-webkit-scrollbar { width: 4px; }
+    .home-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+    .home-greeting { font-size: 1.35rem; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+    .home-sub { font-size: .9rem; color: #555; margin-bottom: 20px; line-height: 1.5; }
+
+    /* Chat CTA card */
+    .chat-cta {
+      background: #fff;
+      border: 1.5px solid #ffd7bc;
+      border-radius: 14px;
       padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer; margin-bottom: 16px;
+      transition: border-color .15s, box-shadow .15s;
+      text-decoration: none;
     }
-    .hw-avatar {
-      width: 52px; height: 52px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 2px solid rgba(255,255,255,.5);
-      flex-shrink: 0;
-      background: #c44d02;
+    .chat-cta:hover { border-color: #e85d04; box-shadow: 0 2px 12px rgba(232,93,4,.15); }
+    .chat-cta .cta-avatar {
+      width: 46px; height: 46px; border-radius: 50%;
+      overflow: hidden; flex-shrink: 0;
+      border: 2px solid #ffd7bc;
+      background: #fff4ee;
     }
-    .hw-avatar img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      object-position: 50% 18%;
+    .chat-cta .cta-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+    .chat-cta .cta-text .cta-title { font-weight: 700; font-size: .95rem; color: #1a1a1a; }
+    .chat-cta .cta-text .cta-sub   { font-size: .78rem; color: #888; margin-top: 2px; }
+    .chat-cta .cta-arrow { margin-left: auto; color: #e85d04; font-size: 1.2rem; }
+
+    /* Quick action cards */
+    .quick-actions {
+      background: #f9f9f9; border: 1px solid #eee;
+      border-radius: 14px; overflow: hidden; margin-bottom: 16px;
     }
-    .hw-info { flex: 1; }
-    .hw-info .name  { font-weight: 700; font-size: 1.05rem; letter-spacing: .01em; }
-    .hw-info .tagline { font-size: .75rem; opacity: .85; margin-top: 1px; }
-    .hw-info .status {
-      font-size: .72rem; opacity: .8;
-      display: flex; align-items: center; gap: 4px; margin-top: 3px;
+    .qa-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer; text-decoration: none;
+      transition: background .12s;
+      color: #1a1a1a;
     }
-    .hw-info .status::before {
-      content: ""; width: 7px; height: 7px;
+    .qa-item:last-child { border-bottom: none; }
+    .qa-item:hover { background: #f0f0f0; }
+    .qa-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .qa-icon.orange { background: #fff0e6; }
+    .qa-icon.blue   { background: #e8f0fe; }
+    .qa-icon.green  { background: #e8f5e9; }
+    .qa-icon.purple { background: #f3e8fd; }
+    .qa-label { flex: 1; }
+    .qa-label .qa-title { font-size: .9rem; font-weight: 600; }
+    .qa-label .qa-sub   { font-size: .75rem; color: #888; margin-top: 1px; }
+    .qa-chevron { color: #bbb; font-size: 1rem; }
+
+    .home-footer {
+      text-align: center; font-size: .68rem; color: #bba898;
+      padding: 8px; border-top: 1px solid #f5ede8; flex-shrink: 0;
+    }
+    .home-footer a { color: #bba898; }
+
+    /* ════════════════════════════════
+       CHAT VIEW
+    ════════════════════════════════ */
+    .chat-header {
+      background: linear-gradient(135deg, #e85d04 0%, #c44d02 100%);
+      color: #fff; padding: 12px 14px;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .chat-back {
+      background: rgba(255,255,255,.2); border: none; color: #fff;
+      width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+      font-size: 16px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background .15s;
+    }
+    .chat-back:hover { background: rgba(255,255,255,.35); }
+    .chat-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      overflow: hidden; border: 2px solid rgba(255,255,255,.4);
+      flex-shrink: 0; background: #c44d02;
+    }
+    .chat-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+    .chat-info { flex: 1; }
+    .chat-info .name    { font-weight: 700; font-size: .95rem; }
+    .chat-info .status  {
+      font-size: .72rem; opacity: .85;
+      display: flex; align-items: center; gap: 4px; margin-top: 2px;
+    }
+    .chat-info .status::before {
+      content: ""; width: 6px; height: 6px;
       border-radius: 50%; background: #90ee90;
     }
-    .hw-close {
+    .chat-close {
       background: none; border: none; color: #fff;
       cursor: pointer; opacity: .75; font-size: 22px; line-height: 1;
     }
-    .hw-close:hover { opacity: 1; }
+    .chat-close:hover { opacity: 1; }
 
-    /* Messages */
     .hw-messages {
-      flex: 1; overflow-y: auto;
-      padding: 16px;
+      flex: 1; overflow-y: auto; padding: 16px;
       display: flex; flex-direction: column; gap: 12px;
     }
     .hw-messages::-webkit-scrollbar { width: 4px; }
     .hw-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
 
     .msg {
-      max-width: 84%;
-      padding: 10px 14px;
-      border-radius: 16px;
-      font-size: .875rem;
-      line-height: 1.5;
-      word-wrap: break-word;
+      max-width: 84%; padding: 10px 14px; border-radius: 16px;
+      font-size: .875rem; line-height: 1.5; word-wrap: break-word;
     }
     .msg.bot {
-      background: #fff4ee;
-      color: #1a1a1a;
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
+      background: #fff4ee; color: #1a1a1a;
+      align-self: flex-start; border-bottom-left-radius: 4px;
       border: 1px solid #ffd7bc;
     }
     .msg.user {
-      background: #e85d04;
-      color: #fff;
-      align-self: flex-end;
-      border-bottom-right-radius: 4px;
+      background: #e85d04; color: #fff;
+      align-self: flex-end; border-bottom-right-radius: 4px;
     }
-    .msg.bot ul   { padding-left: 16px; margin-top: 6px; }
-    .msg.bot li   { margin-bottom: 4px; }
+    .msg.bot ul  { padding-left: 16px; margin-top: 6px; }
+    .msg.bot li  { margin-bottom: 4px; }
     .msg.bot strong { color: #c44d02; }
-    .msg.bot a    { color: #c44d02; }
+    .msg.bot a   { color: #c44d02; }
 
-    /* Typing dots */
     .typing {
       display: flex; align-items: center; gap: 4px;
-      background: #fff4ee;
-      border: 1px solid #ffd7bc;
-      padding: 10px 14px;
-      border-radius: 16px; border-bottom-left-radius: 4px;
+      background: #fff4ee; border: 1px solid #ffd7bc;
+      padding: 10px 14px; border-radius: 16px; border-bottom-left-radius: 4px;
       width: fit-content;
     }
     .typing span {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: #e85d04;
+      width: 7px; height: 7px; border-radius: 50%; background: #e85d04;
       animation: blink 1.2s ease-in-out infinite;
     }
     .typing span:nth-child(2) { animation-delay: .2s; }
@@ -186,64 +232,50 @@
       40%         { opacity:1;   transform:scale(1); }
     }
 
-    /* Suggestions */
     .suggestions {
       padding: 0 14px 10px;
-      display: flex; flex-wrap: wrap; gap: 6px;
-      flex-shrink: 0;
+      display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0;
     }
     .sug-btn {
-      background: #fff4ee;
-      border: 1px solid #ffd7bc;
-      color: #c44d02;
-      font-size: .78rem;
-      padding: 5px 11px;
-      border-radius: 20px; cursor: pointer;
-      white-space: nowrap; font-weight: 500;
+      background: #fff4ee; border: 1px solid #ffd7bc; color: #c44d02;
+      font-size: .78rem; padding: 5px 11px; border-radius: 20px;
+      cursor: pointer; white-space: nowrap; font-weight: 500;
     }
     .sug-btn:hover { background: #ffe8d6; }
 
-    /* Input */
     .hw-input-row {
-      padding: 10px 12px;
-      border-top: 1px solid #f0e8e0;
-      display: flex; gap: 8px;
-      flex-shrink: 0; background: #fff;
+      padding: 10px 12px; border-top: 1px solid #f0e8e0;
+      display: flex; gap: 8px; flex-shrink: 0; background: #fff;
     }
     #hw-input {
-      flex: 1;
-      border: 1px solid #f0cdb0;
-      border-radius: 22px;
-      padding: 9px 14px;
-      font-size: .875rem;
-      outline: none; resize: none;
-      line-height: 1.4; max-height: 100px; overflow-y: auto;
+      flex: 1; border: 1px solid #f0cdb0; border-radius: 22px;
+      padding: 9px 14px; font-size: .875rem;
+      outline: none; resize: none; line-height: 1.4;
+      max-height: 100px; overflow-y: auto; font-family: inherit;
     }
     #hw-input:focus { border-color: #e85d04; }
     #hw-send {
       width: 38px; height: 38px; border-radius: 50%;
       background: #e85d04; border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; align-self: flex-end;
-      transition: background .15s;
+      flex-shrink: 0; align-self: flex-end; transition: background .15s;
     }
     #hw-send:hover    { background: #c44d02; }
     #hw-send:disabled { background: #f0b090; cursor: default; }
     #hw-send svg { width: 16px; height: 16px; fill: #fff; }
 
-    /* Footer */
-    .hw-footer {
+    .chat-footer {
       text-align: center; font-size: .68rem; color: #bba898;
       padding: 6px; border-top: 1px solid #f5ede8; flex-shrink: 0;
     }
-    .hw-footer a { color: #bba898; }
+    .chat-footer a { color: #bba898; }
   </style>
 </head>
 <body>
 
 <div class="demo-page">
   <h1>Ask Meshy!</h1>
-  <p>Howard Wire's product expert is here to help you find exactly the right mesh.</p>
+  <p>Howard Wire's product expert is here to help.</p>
   <button class="open-btn" onclick="hwOpen()">Chat with Meshy →</button>
 </div>
 
@@ -255,49 +287,116 @@
 
 <!-- Panel -->
 <div id="hw-panel" role="dialog" aria-label="Chat with Meshy">
-  <div class="hw-header">
-    <div class="hw-avatar">
-      <img src="/static/meshy.png" alt="Meshy" />
+
+  <!-- ── HOME VIEW ── -->
+  <div class="hw-view" id="view-home">
+    <div class="home-hero">
+      <button class="home-close" onclick="hwClose()" aria-label="Close">×</button>
+      <img class="home-meshy" src="/static/meshy-header.png" alt="Meshy" />
     </div>
-    <div class="hw-info">
-      <div class="name">Meshy</div>
-      <div class="tagline">Howard Wire Product Expert</div>
-      <div class="status">Online — Ready to help!</div>
+
+    <div class="home-body">
+      <div class="home-greeting">Hi there! 👋</div>
+      <div class="home-sub">Meshy &amp; the Howard Wire team are ready to help you find the perfect mesh.</div>
+
+      <!-- Chat CTA -->
+      <div class="chat-cta" onclick="showChat()">
+        <div class="cta-avatar"><img src="/static/meshy-header.png" alt="Meshy" /></div>
+        <div class="cta-text">
+          <div class="cta-title">Ask Meshy a question</div>
+          <div class="cta-sub">AI-powered product search · instant answers</div>
+        </div>
+        <div class="cta-arrow">›</div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="quick-actions">
+        <a class="qa-item" href="https://howard-wire-cloth-co.myshopify.com/pages/contact" target="_blank">
+          <div class="qa-icon orange">📋</div>
+          <div class="qa-label">
+            <div class="qa-title">Request a Quote</div>
+            <div class="qa-sub">Get pricing from our sales team</div>
+          </div>
+          <div class="qa-chevron">›</div>
+        </a>
+        <a class="qa-item" href="https://howard-wire-cloth-co.myshopify.com/collections/all" target="_blank">
+          <div class="qa-icon blue">🔩</div>
+          <div class="qa-label">
+            <div class="qa-title">Browse Products</div>
+            <div class="qa-sub">View our full product range</div>
+          </div>
+          <div class="qa-chevron">›</div>
+        </a>
+        <a class="qa-item" href="https://howard-wire-cloth-co.myshopify.com/pages/faq-1" target="_blank">
+          <div class="qa-icon green">❓</div>
+          <div class="qa-label">
+            <div class="qa-title">FAQ</div>
+            <div class="qa-sub">Common questions answered</div>
+          </div>
+          <div class="qa-chevron">›</div>
+        </a>
+        <a class="qa-item" href="https://howard-wire-cloth-co.myshopify.com/pages/catalogue-2" target="_blank">
+          <div class="qa-icon purple">📚</div>
+          <div class="qa-label">
+            <div class="qa-title">Catalogue</div>
+            <div class="qa-sub">Download our product catalogue</div>
+          </div>
+          <div class="qa-chevron">›</div>
+        </a>
+      </div>
     </div>
-    <button class="hw-close" onclick="hwClose()" aria-label="Close">×</button>
+
+    <div class="home-footer">
+      Howard Wire Cloth Co. · <a href="https://howard-wire-cloth-co.myshopify.com" target="_blank">howardwire.com</a>
+    </div>
   </div>
 
-  <div class="hw-messages" id="hw-messages"></div>
+  <!-- ── CHAT VIEW ── -->
+  <div class="hw-view hidden" id="view-chat">
+    <div class="chat-header">
+      <button class="chat-back" onclick="showHome()" aria-label="Back">‹</button>
+      <div class="chat-avatar"><img src="/static/meshy-header.png" alt="Meshy" /></div>
+      <div class="chat-info">
+        <div class="name">Meshy</div>
+        <div class="status">Online · Howard Wire Product Expert</div>
+      </div>
+      <button class="chat-close" onclick="hwClose()" aria-label="Close">×</button>
+    </div>
 
-  <div class="suggestions" id="hw-suggestions">
-    <button class="sug-btn" onclick="hwSuggest(this)">Stainless steel mesh</button>
-    <button class="sug-btn" onclick="hwSuggest(this)">1/4" wire cloth</button>
-    <button class="sug-btn" onclick="hwSuggest(this)">Galvanized welded wire</button>
-    <button class="sug-btn" onclick="hwSuggest(this)">Talk to sales</button>
+    <div class="hw-messages" id="hw-messages"></div>
+
+    <div class="suggestions" id="hw-suggestions">
+      <button class="sug-btn" onclick="hwSuggest(this)">Stainless steel mesh</button>
+      <button class="sug-btn" onclick="hwSuggest(this)">1/4" wire cloth</button>
+      <button class="sug-btn" onclick="hwSuggest(this)">Galvanized welded wire</button>
+      <button class="sug-btn" onclick="hwSuggest(this)">Talk to sales</button>
+    </div>
+
+    <div class="hw-input-row">
+      <textarea id="hw-input" rows="1" placeholder="Ask Meshy anything about wire mesh…"
+        onkeydown="hwKey(event)" oninput="hwAutoResize(this)"></textarea>
+      <button id="hw-send" onclick="hwSend()" aria-label="Send">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+
+    <div class="chat-footer">
+      Howard Wire Cloth Co. · <a href="https://howard-wire-cloth-co.myshopify.com" target="_blank">howardwire.com</a>
+    </div>
   </div>
 
-  <div class="hw-input-row">
-    <textarea id="hw-input" rows="1" placeholder="Ask Meshy anything about wire mesh…" onkeydown="hwKey(event)" oninput="hwAutoResize(this)"></textarea>
-    <button id="hw-send" onclick="hwSend()" aria-label="Send">
-      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-    </button>
-  </div>
-
-  <div class="hw-footer">Howard Wire Cloth Co. · <a href="https://howardwire.com" target="_blank">howardwire.com</a></div>
-</div>
+</div><!-- #hw-panel -->
 
 <script>
   const API_URL = "/chat";
   let messages = [], isOpen = false, isBusy = false;
+  const WELCOME = "Hey! I'm **Meshy** — I know Howard Wire's entire catalog inside and out. 🧡\n\nTell me what you're working on — material, opening size, application — and I'll find exactly what you need. What are you looking for?";
 
-  const WELCOME = "Hey there! I'm **Meshy** — Howard Wire's product expert! 🧡\n\nTell me what you're working on and I'll find the right mesh for the job. What material, opening size, or application are you looking for?";
-
+  // ── Panel open/close ──────────────────────────────────────────
   function hwOpen() {
     document.getElementById("hw-panel").classList.add("open");
     document.getElementById("hw-launcher").classList.remove("has-unread");
     isOpen = true;
-    if (messages.length === 0) addBotMsg(WELCOME);
-    setTimeout(() => document.getElementById("hw-input").focus(), 250);
   }
   function hwClose() {
     document.getElementById("hw-panel").classList.remove("open");
@@ -305,6 +404,19 @@
   }
   function hwToggle() { isOpen ? hwClose() : hwOpen(); }
 
+  // ── View switching ────────────────────────────────────────────
+  function showChat() {
+    document.getElementById("view-home").classList.add("hidden");
+    document.getElementById("view-chat").classList.remove("hidden");
+    if (messages.length === 0) addBotMsg(WELCOME);
+    setTimeout(() => document.getElementById("hw-input").focus(), 100);
+  }
+  function showHome() {
+    document.getElementById("view-chat").classList.add("hidden");
+    document.getElementById("view-home").classList.remove("hidden");
+  }
+
+  // ── Chat helpers ──────────────────────────────────────────────
   function hwKey(e) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); hwSend(); }
   }
@@ -316,46 +428,36 @@
     document.getElementById("hw-input").value = btn.textContent.trim();
     hwSend();
   }
-
   function scrollBottom() {
     const el = document.getElementById("hw-messages");
     el.scrollTop = el.scrollHeight;
   }
   function addBotMsg(text) {
-    const el = document.getElementById("hw-messages");
     const d = document.createElement("div");
-    d.className = "msg bot";
-    d.innerHTML = mdToHtml(text);
-    el.appendChild(d);
+    d.className = "msg bot"; d.innerHTML = mdToHtml(text);
+    document.getElementById("hw-messages").appendChild(d);
     scrollBottom();
     if (!isOpen) document.getElementById("hw-launcher").classList.add("has-unread");
   }
   function addUserMsg(text) {
-    const el = document.getElementById("hw-messages");
     const d = document.createElement("div");
-    d.className = "msg user";
-    d.textContent = text;
-    el.appendChild(d);
+    d.className = "msg user"; d.textContent = text;
+    document.getElementById("hw-messages").appendChild(d);
     scrollBottom();
   }
   function showTyping() {
-    const el = document.getElementById("hw-messages");
     const d = document.createElement("div");
     d.id = "hw-typing"; d.className = "typing";
     d.innerHTML = "<span></span><span></span><span></span>";
-    el.appendChild(d); scrollBottom();
+    document.getElementById("hw-messages").appendChild(d);
+    scrollBottom();
   }
-  function hideTyping() {
-    const t = document.getElementById("hw-typing");
-    if (t) t.remove();
-  }
-  function hideSuggestions() {
-    document.getElementById("hw-suggestions").style.display = "none";
-  }
+  function hideTyping() { const t = document.getElementById("hw-typing"); if (t) t.remove(); }
+  function hideSuggestions() { document.getElementById("hw-suggestions").style.display = "none"; }
 
   async function hwSend() {
     const input = document.getElementById("hw-input");
-    const text = input.value.trim();
+    const text  = input.value.trim();
     if (!text || isBusy) return;
 
     isBusy = true;
@@ -367,19 +469,18 @@
 
     showTyping();
     try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res  = await fetch(API_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages }),
       });
       const data = await res.json();
       hideTyping();
-      const reply = data.reply || "Hmm, something went sideways on my end! Try again or call Howard Wire directly.";
+      const reply = data.reply || "Hmm, something went sideways! Try again or call us directly.";
       addBotMsg(reply);
       messages.push({ role: "assistant", content: reply });
-    } catch (err) {
+    } catch {
       hideTyping();
-      addBotMsg("Uh oh — connection issue! Refresh the page and try again, or give Howard Wire a call.");
+      addBotMsg("Connection issue! Refresh and try again, or give Howard Wire a call.");
     } finally {
       isBusy = false;
       document.getElementById("hw-send").disabled = false;
@@ -387,16 +488,15 @@
     }
   }
 
-  function mdToHtml(text) {
-    return text
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
-      .replace(/\*(.+?)\*/g,"<em>$1</em>")
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank">$1</a>')
-      .replace(/^[-•] (.+)$/gm,"<li>$1</li>")
-      .replace(/(<li>[\s\S]+?<\/li>)/g,"<ul>$1</ul>")
-      .replace(/\n\n/g,"</p><p>").replace(/\n/g,"<br>")
-      .replace(/^(.+)$/,"<p>$1</p>");
+  function mdToHtml(t) {
+    t = t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    t = t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
+    t = t.replace(/\*(.+?)\*/g,"<em>$1</em>");
+    t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+    t = t.replace(/^[-•] (.+)$/gm,"<li>$1</li>");
+    t = t.replace(/(<li>[\s\S]+?<\/li>)/g,"<ul>$1</ul>");
+    t = t.replace(/\n\n/g,"</p><p>").replace(/\n/g,"<br>");
+    return "<p>" + t + "</p>";
   }
 </script>
 </body>
