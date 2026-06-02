@@ -1,0 +1,42 @@
+/* Howard Wire Chat Widget */
+#hw-launcher{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:#1a3a5c;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;transition:background .2s,transform .15s;z-index:9998}
+#hw-launcher:hover{background:#254f80;transform:scale(1.05)}
+#hw-launcher svg{width:28px;height:28px;fill:#fff}
+#hw-launcher .hw-badge{position:absolute;top:4px;right:4px;width:14px;height:14px;border-radius:50%;background:#e84545;border:2px solid #fff;display:none}
+#hw-launcher.hw-unread .hw-badge{display:block}
+#hw-panel{position:fixed;bottom:96px;right:24px;width:380px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 120px);background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;overflow:hidden;z-index:9999;transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transform-origin:bottom right;transition:transform .2s ease,opacity .2s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+#hw-panel.hw-open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.hw-header{background:#1a3a5c;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.hw-avatar{width:38px;height:38px;border-radius:50%;background:#2d5986;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.hw-info{flex:1}
+.hw-name{font-weight:600;font-size:.95rem}
+.hw-status{font-size:.75rem;opacity:.8;display:flex;align-items:center;gap:4px}
+.hw-status::before{content:"";width:7px;height:7px;border-radius:50%;background:#4cde80}
+.hw-close-btn{background:none;border:none;color:#fff;cursor:pointer;opacity:.7;font-size:20px;line-height:1}
+.hw-close-btn:hover{opacity:1}
+.hw-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.hw-messages::-webkit-scrollbar{width:4px}
+.hw-messages::-webkit-scrollbar-thumb{background:#cdd5e0;border-radius:2px}
+.hw-msg{max-width:84%;padding:10px 13px;border-radius:14px;font-size:.875rem;line-height:1.5;word-wrap:break-word;box-sizing:border-box}
+.hw-msg.hw-bot{background:#f0f4f8;color:#1a1a1a;align-self:flex-start;border-bottom-left-radius:4px}
+.hw-msg.hw-user{background:#1a3a5c;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.hw-msg.hw-bot ul{padding-left:16px;margin-top:6px}
+.hw-msg.hw-bot li{margin-bottom:4px}
+.hw-msg.hw-bot strong{color:#1a3a5c}
+.hw-typing{display:flex;align-items:center;gap:4px;background:#f0f4f8;padding:10px 14px;border-radius:14px;border-bottom-left-radius:4px;width:fit-content}
+.hw-typing span{width:7px;height:7px;border-radius:50%;background:#8a9ab5;animation:hw-blink 1.2s ease-in-out infinite}
+.hw-typing span:nth-child(2){animation-delay:.2s}
+.hw-typing span:nth-child(3){animation-delay:.4s}
+@keyframes hw-blink{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.hw-suggestions{padding:0 16px 10px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0}
+.hw-sug{background:#eef3fa;border:1px solid #c8d8ef;color:#1a3a5c;font-size:.78rem;padding:5px 10px;border-radius:20px;cursor:pointer;white-space:nowrap}
+.hw-sug:hover{background:#dce8f9}
+.hw-input-row{padding:10px 12px;border-top:1px solid #e8eef5;display:flex;gap:8px;flex-shrink:0;background:#fff}
+.hw-input{flex:1;border:1px solid #c8d4e3;border-radius:22px;padding:9px 14px;font-size:.875rem;outline:none;resize:none;line-height:1.4;max-height:100px;overflow-y:auto;font-family:inherit}
+.hw-input:focus{border-color:#1a3a5c}
+.hw-send{width:38px;height:38px;border-radius:50%;background:#1a3a5c;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:background .15s}
+.hw-send:hover{background:#254f80}
+.hw-send:disabled{background:#8a9ab5;cursor:default}
+.hw-send svg{width:16px;height:16px;fill:#fff}
+.hw-footer{text-align:center;font-size:.68rem;color:#aab;padding:6px;border-top:1px solid #f0f2f5;flex-shrink:0}
+.hw-footer a{color:#aab}
