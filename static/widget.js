@@ -17,13 +17,13 @@
 
   // ── Inject CSS ──────────────────────────────────────────────────
   var css = `
-#hw-launcher{position:fixed;bottom:24px;right:24px;width:68px;height:68px;border-radius:50%;background:#e85d04;border:3px solid #fff;cursor:pointer;box-shadow:0 4px 18px rgba(232,93,4,.45);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform .15s,box-shadow .15s;z-index:2147483646;padding:0;}
-#hw-launcher:hover{transform:scale(1.07);box-shadow:0 6px 22px rgba(232,93,4,.55);}
-#hw-launcher img{width:100%;height:100%;object-fit:cover;object-position:50% 18%;}
-#hw-launcher .hw-badge{position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:#1a3a5c;border:2px solid #fff;display:none;}
-#hw-launcher.hw-unread .hw-badge{display:block;}
-#hw-panel{position:fixed;bottom:104px;right:24px;width:390px;max-width:calc(100vw - 32px);height:600px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 10px 44px rgba(0,0,0,.18);display:flex;flex-direction:column;overflow:hidden;z-index:2147483647;transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transform-origin:bottom right;transition:transform .22s ease,opacity .22s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-#hw-panel.hw-open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
+.hw-launcher{position:fixed;bottom:24px;right:24px;width:68px;height:68px;border-radius:50%;background:#e85d04;border:3px solid #fff;cursor:pointer;box-shadow:0 4px 18px rgba(232,93,4,.45);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform .15s,box-shadow .15s;z-index:2147483646;padding:0;}
+.hw-launcher:hover{transform:scale(1.07);box-shadow:0 6px 22px rgba(232,93,4,.55);}
+.hw-launcher img{width:100%;height:100%;object-fit:cover;object-position:50% 18%;}
+.hw-launcher .hw-badge{position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:#1a3a5c;border:2px solid #fff;display:none;}
+.hw-launcher.hw-unread .hw-badge{display:block;}
+.hw-panel{position:fixed;bottom:104px;right:24px;width:390px;max-width:calc(100vw - 32px);height:600px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 10px 44px rgba(0,0,0,.18);display:flex;flex-direction:column;overflow:hidden;z-index:2147483647;transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transform-origin:bottom right;transition:transform .22s ease,opacity .22s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+.hw-panel.hw-open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
 .hw-view{display:flex;flex-direction:column;height:100%;}
 .hw-view.hw-hidden{display:none;}
 
