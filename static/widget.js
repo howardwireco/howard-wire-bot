@@ -17,8 +17,7 @@
 
   // ── Inject CSS ──────────────────────────────────────────────────
   var css = `
-.hw-launcher{position:fixed;bottom:24px;right:24px;width:68px;height:68px;border-radius:50%;background:#e85d04;border:3px solid #fff;cursor:pointer;box-shadow:0 4px 18px rgba(232,93,4,.45);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform .15s,box-shadow .15s;z-index:2147483646;padding:0;}
-.hw-launcher:hover{transform:scale(1.07);box-shadow:0 6px 22px rgba(232,93,4,.55);}
+.hw-launcher{position:fixed;bottom:24px;right:24px;width:68px;height:68px;border-radius:50%;background:#e85d04;border:3px solid #fff;cursor:pointer;box-shadow:0 4px 18px rgba(232,93,4,.45);display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:2147483646;padding:0;}
 .hw-launcher img{width:100%;height:100%;object-fit:cover;object-position:50% 18%;}
 .hw-launcher .hw-badge{position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:#1a3a5c;border:2px solid #fff;display:none;}
 .hw-launcher.hw-unread .hw-badge{display:block;}
