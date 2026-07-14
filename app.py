@@ -1,6 +1,7 @@
 """
 Howard Wire AI Product Assistant — Flask backend
 Run: python3 app.py
+Redeploy marker: static-launcher build (2026-07-14)
 """
 import os, json, subprocess, sys, hashlib, datetime
 from flask import Flask, request, jsonify, send_from_directory
