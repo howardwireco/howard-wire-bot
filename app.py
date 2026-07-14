@@ -3,7 +3,7 @@ Howard Wire AI Product Assistant — Flask backend
 Run: python3 app.py
 Redeploy marker: static-launcher build (2026-07-14)
 """
-import os, json, subprocess, sys, hashlib, datetime, smtplib, threading, time
+import os, json, subprocess, sys, hashlib, datetime, smtplib, threading, time, urllib.request, urllib.error
 from email.message import EmailMessage
 from flask import Flask, request, jsonify, send_from_directory
 import anthropic
@@ -39,17 +39,46 @@ client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 # ── Email finished conversations to the sales team ──────────────────────────
 # One email per conversation, sent once the chat has been idle for
-# EMAIL_IDLE_MINUTES. Configure SMTP in Railway env vars (Gmail / Google
-# Workspace app password). If SMTP_USER/SMTP_PASS are unset, emailing stays off
-# and the bot keeps running normally — nothing breaks.
-SALES_EMAIL    = os.environ.get("SALES_EMAIL", "sales@howardwire.com")
+# EMAIL_IDLE_MINUTES. Two ways to send, pick whichever you can configure:
+#   • Resend  — set RESEND_API_KEY (simplest; no Google app password needed)
+#   • SMTP    — set SMTP_USER + SMTP_PASS (Gmail/Workspace app password)
+# If neither is set, emailing stays off and the bot runs normally — nothing breaks.
+SALES_EMAIL    = os.environ.get("SALES_EMAIL", "sales@howardwire.com")   # recipient
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 SMTP_HOST      = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT      = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER      = os.environ.get("SMTP_USER", "")           # Workspace mailbox, e.g. sales@howardwire.com
 SMTP_PASS      = os.environ.get("SMTP_PASS", "")           # Google 16-char app password
-SMTP_FROM      = os.environ.get("SMTP_FROM", SMTP_USER)
+# From address. Resend needs a verified domain, or use its test sender to start.
+EMAIL_FROM     = os.environ.get("EMAIL_FROM") or (SMTP_USER if SMTP_USER else "Meshy <onboarding@resend.dev>")
 EMAIL_IDLE_MIN = float(os.environ.get("EMAIL_IDLE_MINUTES", "10"))
 EMAILED_PATH   = os.path.join(os.path.dirname(TRANSCRIPT_PATH), "emailed_sids.json")
+
+def _email_enabled():
+    return bool(RESEND_API_KEY or (SMTP_USER and SMTP_PASS))
+
+def _deliver(subject, body_txt, body_html):
+    """Send one email via Resend (if configured) else SMTP. Raises on failure."""
+    if RESEND_API_KEY:
+        payload = json.dumps({"from": EMAIL_FROM, "to": [SALES_EMAIL], "reply_to": SALES_EMAIL,
+                              "subject": subject, "text": body_txt, "html": body_html}).encode("utf-8")
+        req = urllib.request.Request("https://api.resend.com/emails", data=payload, method="POST",
+                                     headers={"Authorization": f"Bearer {RESEND_API_KEY}",
+                                              "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            r.read()
+        return
+    em = EmailMessage()
+    em["Subject"] = subject
+    em["From"] = EMAIL_FROM
+    em["To"] = SALES_EMAIL
+    em["Reply-To"] = SALES_EMAIL
+    em.set_content(body_txt)
+    em.add_alternative(body_html, subtype="html")
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+        s.starttls()
+        s.login(SMTP_USER, SMTP_PASS)
+        s.send_message(em)
 
 def _load_emailed():
     try:
@@ -77,7 +106,7 @@ def _latest_by_sid():
 
 def _send_transcript_email(e):
     """Email one conversation to the sales team. Returns True on success."""
-    if not (SMTP_USER and SMTP_PASS):
+    if not _email_enabled():
         return False
     msgs = e.get("messages", [])
     if not any(m.get("role") == "user" and (m.get("content") or "").strip() for m in msgs):
@@ -103,25 +132,16 @@ def _send_transcript_email(e):
                  + _esc(meta) + '</p><hr style="border:none;border-top:1px solid #e5e7eb">'
                  + "".join(html) + '</div>')
 
-    em = EmailMessage()
-    em["Subject"] = subject
-    em["From"] = SMTP_FROM
-    em["To"] = SALES_EMAIL
-    em["Reply-To"] = SALES_EMAIL
-    em.set_content(body_txt)
-    em.add_alternative(body_html, subtype="html")
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
-        s.starttls()
-        s.login(SMTP_USER, SMTP_PASS)
-        s.send_message(em)
+    _deliver(subject, body_txt, body_html)
     return True
 
 def _mailer_loop():
     """Background: email each conversation once, after it's been idle a while."""
-    if not (SMTP_USER and SMTP_PASS):
-        print("Meshy transcript email: SMTP not configured — email OFF (bot runs normally).")
+    if not _email_enabled():
+        print("Meshy transcript email: not configured — email OFF (bot runs normally).")
         return
-    print(f"Meshy transcript email: ON → {SALES_EMAIL} after {EMAIL_IDLE_MIN} min idle.")
+    how = "Resend" if RESEND_API_KEY else "SMTP"
+    print(f"Meshy transcript email: ON via {how} → {SALES_EMAIL} after {EMAIL_IDLE_MIN} min idle.")
     while True:
         try:
             time.sleep(60)
@@ -287,6 +307,26 @@ def transcripts():
             ".meta{font-size:11px;color:#888;margin-bottom:8px;font-family:ui-monospace,monospace}"
             ".t{margin:6px 0;line-height:1.5;font-size:14px}.t.user b{color:#f26919}.t.assistant b{color:#7ab8ff}</style>"
             f"<h1>Meshy — customer conversations ({len(items)})</h1>{body}")
+
+@app.route("/test-email")
+def test_email():
+    """Setup check: send one sample transcript to SALES_EMAIL right now.
+    Protected by TRANSCRIPT_KEY — open /test-email?key=YOUR_KEY ."""
+    key = os.environ.get("TRANSCRIPT_KEY")
+    if not key or request.args.get("key") != key:
+        return "Add ?key=YOUR_TRANSCRIPT_KEY to the URL.", 401
+    if not _email_enabled():
+        return ("Email isn't configured yet. In Railway set RESEND_API_KEY "
+                "(or SMTP_USER + SMTP_PASS), then reload this page."), 200
+    sample = {"ts": datetime.datetime.utcnow().isoformat() + "Z", "sid": "setup-test",
+              "ip": request.remote_addr or "", "ua": "setup",
+              "messages": [{"role": "user", "content": "This is a test from the Meshy email setup check."}],
+              "reply": "If you're seeing this in sales@howardwire.com, transcript emails are working! 🎉"}
+    try:
+        _send_transcript_email(sample)
+        return f"✅ Sent a test email to {SALES_EMAIL} via {'Resend' if RESEND_API_KEY else 'SMTP'}. Check the inbox (and spam folder).", 200
+    except Exception as ex:
+        return f"❌ Send failed: {ex}", 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
