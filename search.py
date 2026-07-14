@@ -162,6 +162,12 @@ def format_for_prompt(results: list[dict]) -> str:
         if key in seen:
             continue
         seen.add(key)
+        extras = []
+        if item.get("part_num"):
+            extras.append("SKU " + item["part_num"])
+        if item.get("sizes"):
+            extras.append("widths: " + item["sizes"])
+        tail = ("  —  " + " · ".join(extras)) if extras else ""
         url_note = f"  →  {item['url']}" if item.get("url") else ""
-        lines.append(f"• {item['title']}{url_note}")
+        lines.append(f"• {item['title']}{tail}{url_note}")
     return "\n".join(lines)

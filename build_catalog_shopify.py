@@ -1,109 +1,143 @@
 """
-Pulls the live product catalog from the Howard Wire Shopify store
-and rebuilds catalog.json for the chatbot.
+Pulls the live product catalog from the Howard Wire Shopify store and rebuilds
+catalog.json for Meshy. Parses the CURRENT spec-first titles (segments joined by
+" – "), e.g.  '20 Mesh – .009" Wire Diameter – 304 Stainless Steel Woven Wire – 48" Wide'.
 
 Run: python3 build_catalog_shopify.py
 """
-import urllib.request, json, re, os
+import urllib.request, json, re, os, collections
 
-STORE = "https://howard-wire-cloth-co.myshopify.com"
+STORE = "https://howardwire.com"
+
+# Shopify product_type -> the canonical name search.py's aliases expect.
+TYPE_MAP = {
+    "Woven": "Woven Wire Mesh", "Welded": "Welded Wire Mesh",
+    "Perforated": "Perforated Sheet", "Expanded": "Expanded Metal",
+    "Wire": "Wire", "Insect": "Insect Screen", "Hardware Cloth": "Hardware Cloth",
+}
+# material patterns (most specific first) -> canonical material string
+MATERIALS = [
+    (r"316L Stainless Steel|Stainless Steel Type 316L|316L SS", "316L Stainless Steel"),
+    (r"304L Stainless Steel|Stainless Steel Type 304L|304L SS", "304L Stainless Steel"),
+    (r"316 Stainless Steel|Stainless Steel Type 316|316 SS",    "316 Stainless Steel"),
+    (r"304 Stainless Steel|Stainless Steel Type 304|304 SS",    "304 Stainless Steel"),
+    (r"Titanium",           "Titanium"),
+    (r"Galvanized",         "Galvanized Steel"),
+    (r"Bright Aluminum",    "Bright Aluminum"),
+    (r"Charcoal Aluminum",  "Charcoal Aluminum"),
+    (r"Aluminum",           "Aluminum"),
+    (r"Grey Fiberglass",    "Grey Fiberglass"),
+    (r"Charcoal Fiberglass","Charcoal Fiberglass"),
+    (r"PVC Black",          "PVC Black"),
+    (r"Epoxy Black",        "Epoxy Black"),
+    (r"Corten|Weathering",  "Corten Steel"),
+    (r"Nichrome",           "Nichrome"),
+    (r"Monel",              "Monel"),
+    (r"Nickel",             "Nickel"),
+    (r"Brass",              "Brass"),
+    (r"Bronze",             "Bronze"),
+    (r"Copper",             "Copper"),
+    (r"Plain Steel",        "Plain Steel"),
+    (r"Stainless Steel|\bSS\b", "Stainless Steel"),   # generic fallback (ungraded)
+]
 
 def fetch_all_products():
-    products = []
-    page = 1
+    products, page = [], 1
     while True:
         url = f"{STORE}/products.json?limit=250&page={page}"
         req = urllib.request.Request(url, headers={"User-Agent": "HowardWireBot/1.0"})
         with urllib.request.urlopen(req) as r:
-            data = json.loads(r.read())
-        batch = data.get("products", [])
+            batch = json.loads(r.read()).get("products", [])
         if not batch:
             break
         products.extend(batch)
-        print(f"  Page {page}: {len(batch)} products")
+        print(f"  page {page}: {len(batch)}")
         page += 1
     return products
 
-def parse_title(title):
-    """
-    Parse titles like:
-      '304 Stainless Steel · Woven Wire Mesh · 4 Mesh · .035" Wire · KU4035N'
-      '316 Stainless Steel · Wire · 1/4" Wire · RT1/4"-10\''
-      'Plain Steel · Perforated Sheet · 3/8" Opening · EA3/8"SQ'
-    """
-    parts = [p.strip() for p in title.split("·")]
-    material     = parts[0] if len(parts) > 0 else ""
-    product_type = parts[1] if len(parts) > 1 else ""
-    # Everything between product_type and the last part is spec
-    spec         = " · ".join(parts[2:-1]) if len(parts) > 3 else (parts[2] if len(parts) > 2 else "")
-    part_num     = parts[-1] if len(parts) > 2 else ""
-    return material.strip(), product_type.strip(), spec.strip(), part_num.strip()
-
-def extract_mesh_size(spec, title):
-    """Extract mesh count or opening size from spec string."""
-    # Mesh count: '4 Mesh', '100 Mesh'
-    m = re.search(r'(\d+(?:×\d+)?)\s*[Mm]esh', spec or title)
-    if m:
-        return m.group(1) + " Mesh"
-    # Opening size: '1/4" Opening', '.250" Opening'
-    m = re.search(r'([\d./]+["\s]*(?:Opening|opening))', spec or title)
-    if m:
-        return m.group(1).strip()
-    return spec
-
-def extract_wire_dia(spec, title):
-    """Extract wire diameter from spec."""
-    m = re.search(r'([\d.]+)"\s*[Ww]ire', spec or title)
-    if m:
-        return m.group(1) + '"'
+def material_of(title):
+    for pat, canon in MATERIALS:
+        if re.search(pat, title, re.IGNORECASE):
+            return canon
     return ""
 
+def type_of(title, shopify_type):
+    if re.search(r"Dutch Weave", title, re.IGNORECASE):
+        return "Dutch Weave Mesh"
+    if re.search(r"Twill", title, re.IGNORECASE):
+        return "Twilled Wire Mesh"
+    if re.search(r"Hardware Cloth", title, re.IGNORECASE):
+        return "Hardware Cloth"
+    if re.search(r"Insect Screen", title, re.IGNORECASE):
+        return "Insect Screen"
+    if re.search(r"Decorative", title, re.IGNORECASE):
+        return "Decorative Perforated"
+    return TYPE_MAP.get(shopify_type, shopify_type)
+
+def spec_of(title):
+    """Everything before the material+construction segment = the spec (mesh/opening/wire/thickness)."""
+    segs = [s.strip() for s in title.split(" – ")]
+    for i, s in enumerate(segs):
+        if material_of(s):
+            return " · ".join(segs[:i])
+    return " · ".join(segs[:-1]) if len(segs) > 1 else ""
+
 def build():
-    print("Fetching products from Shopify...")
+    print("Fetching live products from Shopify...")
     raw = fetch_all_products()
-    print(f"Total products fetched: {len(raw)}")
+    print(f"total: {len(raw)}")
 
     items = []
     for p in raw:
-        title  = p.get("title", "").strip()
-        handle = p.get("handle", "").strip()
-        body   = re.sub(r"<[^>]+>", "", p.get("body_html", "") or "").strip()
-        url    = f"{STORE}/products/{handle}"
+        title  = (p.get("title") or "").strip()
+        handle = (p.get("handle") or "").strip()
+        body   = re.sub(r"<[^>]+>", " ", p.get("body_html") or "").strip()
+        body   = re.sub(r"\s+", " ", body)
+        variants = p.get("variants") or []
+        skus  = [(v.get("sku") or "").strip() for v in variants if v.get("sku")]
+        sizes = [(v.get("title") or "").strip() for v in variants
+                 if v.get("title") and v["title"] != "Default Title"]
 
-        material, product_type, spec, part_num = parse_title(title)
-        mesh_or_opening = extract_mesh_size(spec, title)
-        wire_dia        = extract_wire_dia(spec, title)
+        material = material_of(title)
+        ptype    = type_of(title, p.get("product_type", ""))
+        spec     = spec_of(title)
+        mesh  = re.search(r'(\d+(?:\s?x\s?\d+)?)\s*Mesh', title)
+        openg = re.search(r'([\d./]+)"?\s*(?:Square Hole|Hole|Opening)', title)
+        wire  = re.search(r'([\d.]+)"\s*Wire', title)
+
+        desc = body
+        if sizes:
+            desc += "  Available sizes: " + ", ".join(sizes) + "."
+        desc += "  Quote-only — cut to size on request."
 
         items.append({
             "title":        title,
             "handle":       handle,
-            "url":          url,
+            "url":          f"{STORE}/products/{handle}",
             "material":     material,
-            "product_type": product_type,
+            "product_type": ptype,
             "spec":         spec,
-            "part_num":     part_num,
-            "mesh_opening": mesh_or_opening,
-            "wire_dia":     wire_dia,
-            "description":  body[:300] if body else title,
+            "part_num":     " / ".join(skus),
+            "mesh_opening": (mesh.group(0) if mesh else (openg.group(0) if openg else "")),
+            "wire_dia":     (wire.group(1) + '"' if wire else ""),
+            "sizes":        " / ".join(sizes),
+            "description":  desc[:400],
         })
 
     out = os.path.join(os.path.dirname(__file__), "catalog.json")
-    with open(out, "w") as f:
-        json.dump(items, f, indent=2)
-
-    print(f"\nCatalog rebuilt: {len(items)} products → {out}")
-
-    # Summary by product type
-    from collections import Counter
-    types = Counter(i["product_type"] for i in items)
-    print("\nProduct types:")
-    for t, n in types.most_common():
+    json.dump(items, open(out, "w"), indent=2, ensure_ascii=False)
+    print(f"\ncatalog rebuilt: {len(items)} products -> {out}")
+    print("\nby type:")
+    for t, n in collections.Counter(i["product_type"] for i in items).most_common():
         print(f"  {n:4d}  {t}")
-
-    mats = Counter(i["material"] for i in items)
-    print("\nMaterials:")
-    for m, n in mats.most_common():
-        print(f"  {n:4d}  {m}")
+    print("\nby material:")
+    for m, n in collections.Counter(i["material"] for i in items).most_common():
+        print(f"  {n:4d}  {m or '(none)'}")
+    miss = [i["title"] for i in items if not i["material"]]
+    if miss:
+        print(f"\n{len(miss)} with no material parsed (sample):")
+        for t in miss[:12]:
+            print("   ", t)
 
 if __name__ == "__main__":
     build()
