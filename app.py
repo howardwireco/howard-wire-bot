@@ -3,7 +3,8 @@ Howard Wire AI Product Assistant — Flask backend
 Run: python3 app.py
 Redeploy marker: static-launcher build (2026-07-14)
 """
-import os, json, subprocess, sys, hashlib, datetime
+import os, json, subprocess, sys, hashlib, datetime, smtplib, threading, time
+from email.message import EmailMessage
 from flask import Flask, request, jsonify, send_from_directory
 import anthropic
 from search import search, format_for_prompt
@@ -35,6 +36,125 @@ def _add_cors_headers(resp):
     return resp
 
 client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+# ── Email finished conversations to the sales team ──────────────────────────
+# One email per conversation, sent once the chat has been idle for
+# EMAIL_IDLE_MINUTES. Configure SMTP in Railway env vars (Gmail / Google
+# Workspace app password). If SMTP_USER/SMTP_PASS are unset, emailing stays off
+# and the bot keeps running normally — nothing breaks.
+SALES_EMAIL    = os.environ.get("SALES_EMAIL", "sales@howardwire.com")
+SMTP_HOST      = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT      = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER      = os.environ.get("SMTP_USER", "")           # Workspace mailbox, e.g. sales@howardwire.com
+SMTP_PASS      = os.environ.get("SMTP_PASS", "")           # Google 16-char app password
+SMTP_FROM      = os.environ.get("SMTP_FROM", SMTP_USER)
+EMAIL_IDLE_MIN = float(os.environ.get("EMAIL_IDLE_MINUTES", "10"))
+EMAILED_PATH   = os.path.join(os.path.dirname(TRANSCRIPT_PATH), "emailed_sids.json")
+
+def _load_emailed():
+    try:
+        return json.load(open(EMAILED_PATH))
+    except Exception:
+        return {}
+
+def _latest_by_sid():
+    """Group the transcript log by session id -> the entry with the fullest thread."""
+    convos = {}
+    try:
+        with open(TRANSCRIPT_PATH, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    e = json.loads(line)
+                except Exception:
+                    continue
+                sid = e.get("sid")
+                cur = convos.get(sid)
+                if not cur or len(e.get("messages", [])) >= len(cur.get("messages", [])):
+                    convos[sid] = e
+    except FileNotFoundError:
+        pass
+    return convos
+
+def _send_transcript_email(e):
+    """Email one conversation to the sales team. Returns True on success."""
+    if not (SMTP_USER and SMTP_PASS):
+        return False
+    msgs = e.get("messages", [])
+    if not any(m.get("role") == "user" and (m.get("content") or "").strip() for m in msgs):
+        return False  # nothing a customer actually said
+    first_q = next((m.get("content", "") for m in msgs if m.get("role") == "user"), "").strip().replace("\n", " ")
+    subject = f"New Meshy chat — {first_q[:60]}" if first_q else "New Meshy chat"
+
+    txt, html = [], []
+    turns = list(msgs)
+    if (e.get("reply") or "").strip():                 # final assistant reply is stored separately
+        turns = turns + [{"role": "assistant", "content": e["reply"]}]
+    for m in turns:
+        who = "Customer" if m.get("role") == "user" else "Meshy"
+        content = (m.get("content", "") or "").strip()
+        txt.append(f"{who}: {content}")
+        color = "#c2410c" if who == "Customer" else "#1d4ed8"
+        html.append(f'<p style="margin:8px 0"><b style="color:{color}">{who}:</b> {_esc(content)}</p>')
+
+    meta = f"{e.get('ts','')} · IP {e.get('ip','')} · session {e.get('sid','')}"
+    body_txt = "A customer just chatted with Meshy on howardwire.com.\n\n" + meta + "\n\n" + "\n\n".join(txt)
+    body_html = ('<div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:640px">'
+                 '<p style="color:#6b7280;font-size:12px">A customer just chatted with Meshy on howardwire.com.<br>'
+                 + _esc(meta) + '</p><hr style="border:none;border-top:1px solid #e5e7eb">'
+                 + "".join(html) + '</div>')
+
+    em = EmailMessage()
+    em["Subject"] = subject
+    em["From"] = SMTP_FROM
+    em["To"] = SALES_EMAIL
+    em["Reply-To"] = SALES_EMAIL
+    em.set_content(body_txt)
+    em.add_alternative(body_html, subtype="html")
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+        s.starttls()
+        s.login(SMTP_USER, SMTP_PASS)
+        s.send_message(em)
+    return True
+
+def _mailer_loop():
+    """Background: email each conversation once, after it's been idle a while."""
+    if not (SMTP_USER and SMTP_PASS):
+        print("Meshy transcript email: SMTP not configured — email OFF (bot runs normally).")
+        return
+    print(f"Meshy transcript email: ON → {SALES_EMAIL} after {EMAIL_IDLE_MIN} min idle.")
+    while True:
+        try:
+            time.sleep(60)
+            emailed = _load_emailed()
+            now = datetime.datetime.utcnow()
+            changed = False
+            for sid, e in _latest_by_sid().items():
+                n = len(e.get("messages", []))
+                if emailed.get(sid) == n:
+                    continue                            # already emailed this thread at this length
+                try:
+                    ts = datetime.datetime.fromisoformat(e.get("ts", "").replace("Z", ""))
+                except Exception:
+                    continue
+                if (now - ts).total_seconds() / 60.0 < EMAIL_IDLE_MIN:
+                    continue                            # still active — wait for it to go quiet
+                try:
+                    if _send_transcript_email(e):
+                        emailed[sid] = n
+                        changed = True
+                        print(f"Meshy: emailed transcript sid={sid} ({n} msgs) to {SALES_EMAIL}")
+                except Exception as ex:
+                    print("transcript email send error:", ex)
+            if changed:
+                try:
+                    json.dump(emailed, open(EMAILED_PATH, "w"))
+                except Exception as ex:
+                    print("emailed-state save error:", ex)
+        except Exception as ex:
+            print("mailer loop error:", ex)
+
+# Start the mailer once (daemon so it never blocks shutdown).
+threading.Thread(target=_mailer_loop, daemon=True).start()
 
 SYSTEM_PROMPT = """You are Meshy — Howard Wire Cloth Co.'s friendly mascot and product expert. You're a wire mesh character who loves helping people find the right product. You're enthusiastic, knowledgeable, and a little playful — but always professional and helpful. You occasionally use mesh/wire puns naturally (e.g. "let's get to the point", "I'm on a roll", "weave got you covered") but don't overdo it.
 
