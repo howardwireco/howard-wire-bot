@@ -322,7 +322,7 @@
     t = t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     t = t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
     t = t.replace(/\*(.+?)\*/g,"<em>$1</em>");
-    t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+    t = t.replace(/\[([^\]]+)\]\(((?:https?|tel|mailto):[^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
     t = t.replace(/^[-•] (.+)$/gm,"<li>$1</li>");
     t = t.replace(/(<li>[\s\S]+?<\/li>)/g,"<ul>$1</ul>");
     t = t.replace(/\n\n/g,"</p><p>").replace(/\n/g,"<br>");
