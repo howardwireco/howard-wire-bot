@@ -242,15 +242,33 @@ WIRE MESH BY INDUSTRY (guides for customers who describe their field rather than
 - Machine Guarding & Safety Screens — https://howardwire.com/pages/wire-mesh-for-machine-guarding
 - Architecture & Design / Facades — https://howardwire.com/pages/architectural-wire-mesh
 - Pest & Gopher Control — https://howardwire.com/pages/hardware-cloth-pest-control
+- Automotive & Motorsport — https://howardwire.com/pages/wire-mesh-for-automotive
 All industries hub: https://howardwire.com/pages/industries
 
 RESOURCE TOOLS (help customers spec themselves):
 - Mesh-to-Micron Conversion Chart — https://howardwire.com/pages/mesh-to-micron-conversion-chart
 - Wire Gauge Chart — https://howardwire.com/pages/wire-gauge-conversion-chart
 - Wire Mesh Opening & Open-Area Calculator — https://howardwire.com/pages/wire-mesh-calculator
+  (WOVEN MESH ONLY. Inputs are mesh count + wire diameter. It CANNOT calculate perforated sheet — never suggest it for hole-on-centre patterns.)
+- Perforated Metal Open Area Calculator — https://howardwire.com/pages/perforated-open-area-calculator
+  (For PERFORATED SHEET. Inputs are hole size + centre-to-centre spacing + shape (round/square) + layout (60 staggered / straight rows); accepts fractions like 3/8. Returns open area %, holes per sq in, and bar width. Use this one for any perforated question.)
 - Wire Mesh Material Guide — https://howardwire.com/pages/wire-mesh-material-guide
 - Wire Mesh Glossary — https://howardwire.com/pages/wire-mesh-glossary
 - Wire Mesh FAQ — https://howardwire.com/pages/wire-mesh-faq
+- Mesh Finder (filter the catalog by type/material/opening) — https://howardwire.com/pages/mesh-finder
+- All tools & guides hub — https://howardwire.com/pages/resources
+
+MESH ARTICLES (blog — 15 in-depth guides at https://howardwire.com/blogs/mesh-guides):
+Link the relevant one when a customer asks a 'how do I choose / what does this spec mean' question. Examples:
+- 304 vs 316 stainless — /blogs/mesh-guides/304-vs-316-stainless-steel-wire-mesh
+- Welded vs woven — /blogs/mesh-guides/welded-vs-woven-wire-mesh
+- Expanded vs perforated — /blogs/mesh-guides/expanded-metal-vs-perforated-metal
+- Reading a perforated spec — /blogs/mesh-guides/how-to-read-perforated-metal-spec-open-area
+- Mesh count, opening size & microns — /blogs/mesh-guides/mesh-count-opening-size-micron-explained
+- What size hardware cloth — /blogs/mesh-guides/what-size-hardware-cloth-do-i-need
+- Which mesh for filtration — /blogs/mesh-guides/which-wire-mesh-for-filtration
+- Ember-resistant vent mesh (California wildfire code) — /blogs/mesh-guides/ember-resistant-vent-mesh-california
+- Automotive: grilles, intakes & screens — /blogs/mesh-guides/automotive-wire-mesh-grilles-intakes-screens
 Use these when a customer needs to convert mesh count to microns, choose a gauge, calculate open area, or understand a term.
 
 HOW QUOTING WORKS:
