@@ -6,12 +6,12 @@
 
   var MESHY_ROLL   = BASE + "/static/meshy.png";
   var MESHY_HEADER = BASE + "/static/meshy-header.png";
-  var STORE        = "https://howard-wire-cloth-co.myshopify.com";
+  var STORE        = "https://howardwire.com";
 
   var QUICK_LINKS = [
-    { icon:"📋", color:"orange", title:"Request a Quote",  sub:"Get pricing from our sales team",    url: STORE + "/pages/contact"    },
-    { icon:"🔩", color:"blue",   title:"Browse Products",  sub:"View our full product range",        url: STORE + "/collections/all"  },
-    { icon:"❓", color:"green",  title:"FAQ",               sub:"Common questions answered",          url: STORE + "/pages/faq-1"      },
+    { icon:"📋", color:"orange", title:"Request a Quote",  sub:"Get pricing from our sales team",    url: STORE + "/pages/quote"      },
+    { icon:"🔩", color:"blue",   title:"Browse Products",  sub:"View our full product range",        url: STORE + "/collections"      },
+    { icon:"❓", color:"green",  title:"FAQ",               sub:"Common questions answered",          url: STORE + "/pages/wire-mesh-faq"},
     { icon:"📚", color:"purple", title:"Catalogue",         sub:"Download our product catalogue",     url: STORE + "/pages/catalogue-2"},
   ];
 
@@ -175,7 +175,7 @@
   homeBody.appendChild(qaList);
 
   var homeFoot = el("div", "hw-home-foot");
-  var homeFootA = a("https://howard-wire-cloth-co.myshopify.com");
+  var homeFootA = a(STORE);
   homeFootA.textContent = "howardwire.com";
   homeFoot.appendChild(document.createTextNode("Howard Wire Cloth Co. · "));
   homeFoot.appendChild(homeFootA);
@@ -230,7 +230,7 @@
   inpRow.appendChild(inp); inpRow.appendChild(sendBtn);
 
   var chatFoot = el("div", "hw-chat-foot");
-  var chatFootA = a("https://howard-wire-cloth-co.myshopify.com");
+  var chatFootA = a(STORE);
   chatFootA.textContent = "howardwire.com";
   chatFoot.appendChild(document.createTextNode("Howard Wire Cloth Co. · "));
   chatFoot.appendChild(chatFootA);
